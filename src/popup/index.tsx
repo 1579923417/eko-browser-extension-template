@@ -10,6 +10,7 @@ interface LogMessage {
 
 const AppRun = () => {
   const [running, setRunning] = useState(false);
+  const [canceling, setCanceling] = useState(false);
   const [logs, setLogs] = useState<LogMessage[]>([]);
   const logsRef = useRef<HTMLDivElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -18,17 +19,21 @@ const AppRun = () => {
   );
 
   useEffect(() => {
-    chrome.storage.local.get(["running", "prompt"], (result) => {
+    chrome.storage.local.get(["running", "prompt", "canceling"], (result) => {
       if (result.running !== undefined) {
         setRunning(result.running);
       }
       if (result.prompt !== undefined) {
         setPrompt(result.prompt);
       }
+      if (result.canceling !== undefined) {
+        setCanceling(result.canceling);
+      }
     });
     const messageListener = (message: any) => {
       if (message.type === "stop") {
         setRunning(false);
+        setCanceling(false);
         chrome.storage.local.set({ running: false });
       } else if (message.type === "log") {
         const time = new Date().toLocaleTimeString();
@@ -56,9 +61,16 @@ const AppRun = () => {
     }
     setLogs([]);
     setRunning(true);
+    setCanceling(false);
     chrome.storage.local.set({ running: true, prompt });
     chrome.runtime.sendMessage({ type: "run", prompt: prompt.trim() });
   };
+
+  const handleCancel = () =>{
+    setCanceling(true);
+    chrome.storage.local.set({ canceling: true, prompt });
+    chrome.runtime.sendMessage({ type: "cancel" });
+  }
 
   const getLogStyle = (level: string) => {
     switch (level) {
@@ -102,6 +114,22 @@ const AppRun = () => {
         >
           {running ? "Running..." : "Run"}
         </Button>
+        
+        <Button
+          type="primary"
+          onClick={handleCancel}
+          disabled={canceling || !running}
+          style={{
+            marginTop: "4px",
+            left: "10px",
+            backgroundColor: canceling ? "#ffcccc" : "#ff4d4f",
+            borderColor: canceling ? "#ffcccc" : "#ff4d4f",
+            color: canceling ? "#555555" : "#fff" 
+          }}
+        >
+          {canceling ? "Canceling..." : "Cancel"}
+        </Button>
+        
       </div>
       {logs.length > 0 && (
         <div

@@ -1,5 +1,5 @@
 import { Eko, createChromeApiProxy } from "@eko-ai/eko";
-import { LLMConfig, WorkflowCallback } from "@eko-ai/eko/types";
+import { LLMConfig, WorkflowCallback, Workflow } from "@eko-ai/eko/types";
 import { getLLMConfig } from "@eko-ai/eko/extension";
 
 class MyChromeProxy {
@@ -9,6 +9,9 @@ class MyChromeProxy {
   }
 }
 
+let eko: Eko;
+let currentWorkflow: Workflow;
+
 export async function main(prompt: string) {
   let chromeProxy = createChromeApiProxy(MyChromeProxy);
   let config = await getLLMConfig(chromeProxy);
@@ -17,11 +20,17 @@ export async function main(prompt: string) {
     return;
   }
 
-  let eko = new Eko(config as LLMConfig, { callback: hookLogs(), chromeProxy: chromeProxy });
+  eko = new Eko(config as LLMConfig, { callback: hookLogs(), chromeProxy: chromeProxy });
 
-  const workflow = await eko.generate(prompt);
+  currentWorkflow = await eko.generate(prompt);
 
-  await eko.execute(workflow);
+  await eko.execute(currentWorkflow);
+}
+
+export async function cancelWorkflow() {
+  if (currentWorkflow) {
+    await eko.cancel(currentWorkflow);
+  }
 }
 
 function hookLogs(): WorkflowCallback {
