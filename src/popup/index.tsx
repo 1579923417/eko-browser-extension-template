@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 import React, { useState, useRef, useEffect } from "react";
-import { Button, Input } from "antd";
+import { Button, Input, Modal, Select } from "antd";
 
 interface LogMessage {
   time: string;
@@ -18,6 +18,12 @@ const AppRun = () => {
     "Search Sam Altman's information and summarize it into markdown format for export"
   );
 
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalQuestion, setModalQuestion] = useState("");
+  const [modalChoices, setModalChoices] = useState<string[]>([]);
+  const [modalType, setModalType] = useState<"text" | "single" | "multiple" | "operate">("text");
+  const [modalCallback, setModalCallback] = useState<(response: any) => void>(() => {});
+
   useEffect(() => {
     chrome.storage.local.get(["running", "prompt", "canceling"], (result) => {
       if (result.running !== undefined) {
@@ -30,6 +36,7 @@ const AppRun = () => {
         setCanceling(result.canceling);
       }
     });
+
     const messageListener = (message: any, sender: any, sendResponse: any) => {
       if (message.type === "stop") {
         setRunning(false);
@@ -42,19 +49,30 @@ const AppRun = () => {
           { time, log: message.log, level: message.level || "info" },
         ]);
       } else if (message.type === "humanInputText") {
-        const answer = window.prompt(message.question);
-        sendResponse({ answer });
+        setModalQuestion(message.question);
+        setModalType("text");
+        setModalCallback(() => (response: any) => sendResponse({ answer: response }));
+        setModalVisible(true);
       } else if (message.type === "humanInputSingleChoice") {
-        const answer = window.prompt(`${message.question}\nChoices: ${message.choices.join(", ")}`);
-        sendResponse({ answer });
+        setModalQuestion(message.question);
+        setModalChoices(message.choices);
+        setModalType("single");
+        setModalCallback(() => (response: any) => sendResponse({ answer: response }));
+        setModalVisible(true);
       } else if (message.type === "humanInputMultipleChoice") {
-        const answer = window.prompt(`${message.question}\nChoices: ${message.choices.join(", ")}`);
-        sendResponse({ answer: answer.split(",") });
+        setModalQuestion(message.question);
+        setModalChoices(message.choices);
+        setModalType("multiple");
+        setModalCallback(() => (response: any) => sendResponse({ answer: response }));
+        setModalVisible(true);
       } else if (message.type === "humanOperate") {
-        const userOperation = window.prompt(message.reason);
-        sendResponse({ userOperation });
+        setModalQuestion(message.reason);
+        setModalType("operate");
+        setModalCallback(() => (response: any) => sendResponse({ userOperation: response }));
+        setModalVisible(true);
       }
     };
+
     chrome.runtime.onMessage.addListener(messageListener);
     return () => {
       chrome.runtime.onMessage.removeListener(messageListener);
@@ -66,6 +84,35 @@ const AppRun = () => {
       logsRef.current.scrollTop = logsRef.current.scrollHeight;
     }
   }, [logs]);
+
+    // 添加示例对话框的触发逻辑
+    useEffect(() => {
+      // 示例：显示文本输入对话框
+      setModalQuestion("Please enter some text:");
+      setModalType("text");
+      setModalCallback((response: any) => console.log("User input:", response));
+      setModalVisible(true);
+  
+      // // 示例：显示单选对话框
+      // setModalQuestion("Please select an option:");
+      // setModalChoices(["Option 1", "Option 2", "Option 3"]);
+      // setModalType("single");
+      // setModalCallback((response: any) => console.log("User selected:", response));
+      // setModalVisible(true);
+  
+      // // 示例：显示多选对话框
+      // setModalQuestion("Please select multiple options:");
+      // setModalChoices(["Option 1", "Option 2", "Option 3"]);
+      // setModalType("multiple");
+      // setModalCallback((response: any) => console.log("User selected:", response));
+      // setModalVisible(true);
+  
+      // // 示例：显示操作对话框
+      // setModalQuestion("Please describe the operation:");
+      // setModalType("operate");
+      // setModalCallback((response: any) => console.log("User operation:", response));
+      // setModalVisible(true);
+    }, []);
 
   const handleClick = () => {
     if (!prompt.trim()) {
@@ -84,6 +131,11 @@ const AppRun = () => {
     chrome.runtime.sendMessage({ type: "cancel" });
   };
 
+  const handleModalOk = (response: any) => {
+    setModalVisible(false);
+    modalCallback(response);
+  };
+
   const getLogStyle = (level: string) => {
     switch (level) {
       case "error":
@@ -95,11 +147,14 @@ const AppRun = () => {
     }
   };
 
+  const [inputValue, setInputValue] = useState<string>("");
+  const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
+
   return (
     <div
       style={{
         minWidth: "360px",
-        minHeight: "80px",
+        minHeight: "420px",
       }}
     >
       <div
@@ -174,6 +229,51 @@ const AppRun = () => {
           ))}
         </div>
       )}
+
+      <Modal
+        title="User Input Required"
+        visible={modalVisible}
+        onOk={() => handleModalOk(modalType === "multiple" ? selectedChoices : inputValue)}
+        onCancel={() => setModalVisible(false)}
+      >
+        {modalType === "text" && (
+          <Input
+            placeholder={modalQuestion}
+            onChange={(e) => setInputValue(e.target.value)}
+          />
+        )}
+        {modalType === "single" && (
+          <Select
+            placeholder={modalQuestion}
+            onChange={(value) => setInputValue(value)}
+          >
+            {modalChoices.map((choice) => (
+              <Select.Option key={choice} value={choice}>
+                {choice}
+              </Select.Option>
+            ))}
+          </Select>
+        )}
+        {modalType === "multiple" && (
+          <Select
+            mode="multiple"
+            placeholder={modalQuestion}
+            onChange={(value) => setSelectedChoices(value)}
+          >
+            {modalChoices.map((choice) => (
+              <Select.Option key={choice} value={choice}>
+                {choice}
+              </Select.Option>
+            ))}
+          </Select>
+        )}
+        {modalType === "operate" && (
+          <Input
+            placeholder={modalQuestion}
+            onChange={(e) => setInputValue(e.target.value)}
+          />
+        )}
+      </Modal>
     </div>
   );
 };
