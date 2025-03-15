@@ -29,6 +29,22 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       chrome.runtime.sendMessage({ type: "log", log: "Cancel..." });
       // Cancel workflow
       await cancelWorkflow();
+    } else if (request.type === "humanInputText") {
+      // 处理人机交互的文本输入消息
+      const answer = prompt(request.question);
+      sendResponse({ answer });
+    } else if (request.type === "humanInputSingleChoice") {
+      // 处理人机交互的单选消息
+      const answer = prompt(`${request.question}\nChoices: ${request.choices.join(", ")}`);
+      sendResponse({ answer });
+    } else if (request.type === "humanInputMultipleChoice") {
+      // 处理人机交互的多选消息
+      const answer = prompt(`${request.question}\nChoices: ${request.choices.join(", ")}`);
+      sendResponse({ answer: answer.split(",") });
+    } else if (request.type === "humanOperate") {
+      // 处理人机交互的操作消息
+      const userOperation = prompt(request.reason);
+      sendResponse({ userOperation });
     }
   } catch (e) {
     handleError(e);

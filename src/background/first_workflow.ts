@@ -59,6 +59,38 @@ function hookLogs(): WorkflowCallback {
       onLlmMessage: async (textContent) => {
         printLog("LLM: " + textContent);
       },
+      onHumanInputText: async (question) => {
+        // 实现人机交互的文本输入钩子函数
+        return new Promise((resolve) => {
+          chrome.runtime.sendMessage({ type: "humanInputText", question }, (response) => {
+            resolve(response.answer);
+          });
+        });
+      },
+      onHumanInputSingleChoice: async (question, choices) => {
+        // 实现人机交互的单选钩子函数
+        return new Promise((resolve) => {
+          chrome.runtime.sendMessage({ type: "humanInputSingleChoice", question, choices }, (response) => {
+            resolve(response.answer);
+          });
+        });
+      },
+      onHumanInputMultipleChoice: async (question, choices) => {
+        // 实现人机交互的多选钩子函数
+        return new Promise((resolve) => {
+          chrome.runtime.sendMessage({ type: "humanInputMultipleChoice", question, choices }, (response) => {
+            resolve(response.answer);
+          });
+        });
+      },
+      onHumanOperate: async (reason) => {
+        // 实现人机交互的操作钩子函数
+        return new Promise((resolve) => {
+          chrome.runtime.sendMessage({ type: "humanOperate", reason }, (response) => {
+            resolve(response.userOperation);
+          });
+        });
+      },
     },
   };
 }

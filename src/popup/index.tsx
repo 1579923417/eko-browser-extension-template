@@ -30,7 +30,7 @@ const AppRun = () => {
         setCanceling(result.canceling);
       }
     });
-    const messageListener = (message: any) => {
+    const messageListener = (message: any, sender: any, sendResponse: any) => {
       if (message.type === "stop") {
         setRunning(false);
         setCanceling(false);
@@ -41,6 +41,18 @@ const AppRun = () => {
           ...prev,
           { time, log: message.log, level: message.level || "info" },
         ]);
+      } else if (message.type === "humanInputText") {
+        const answer = window.prompt(message.question);
+        sendResponse({ answer });
+      } else if (message.type === "humanInputSingleChoice") {
+        const answer = window.prompt(`${message.question}\nChoices: ${message.choices.join(", ")}`);
+        sendResponse({ answer });
+      } else if (message.type === "humanInputMultipleChoice") {
+        const answer = window.prompt(`${message.question}\nChoices: ${message.choices.join(", ")}`);
+        sendResponse({ answer: answer.split(",") });
+      } else if (message.type === "humanOperate") {
+        const userOperation = window.prompt(message.reason);
+        sendResponse({ userOperation });
       }
     };
     chrome.runtime.onMessage.addListener(messageListener);
@@ -66,11 +78,11 @@ const AppRun = () => {
     chrome.runtime.sendMessage({ type: "run", prompt: prompt.trim() });
   };
 
-  const handleCancel = () =>{
+  const handleCancel = () => {
     setCanceling(true);
     chrome.storage.local.set({ canceling: true, prompt });
     chrome.runtime.sendMessage({ type: "cancel" });
-  }
+  };
 
   const getLogStyle = (level: string) => {
     switch (level) {

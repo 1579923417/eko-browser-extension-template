@@ -15,10 +15,10 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@eko-ai/eko": "link:..\\eko",
     "antd": "^5.22.4",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "@eko-ai/eko": "^1.0.9"
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@types/chrome": "0.0.158",
