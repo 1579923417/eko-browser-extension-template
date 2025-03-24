@@ -1,7 +1,6 @@
 import Eko from "@eko-ai/eko";
 import { loadTools } from "@eko-ai/eko/extension";
 import { main, cancelWorkflow } from "./first_workflow";
-import { ca } from "element-plus/es/locales.mjs";
 
 chrome.storage.local.set({ running: false, canceling: false });
 
