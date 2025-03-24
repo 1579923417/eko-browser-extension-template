@@ -5,7 +5,7 @@ const srcDir = path.join(__dirname, "..", "src");
 
 module.exports = {
     entry: {
-      popup: path.join(srcDir, 'popup/index.tsx'),
+      sidebar: path.join(srcDir, 'sidebar/index.tsx'),
       options: path.join(srcDir, 'options/index.tsx'),
       background: path.join(srcDir, 'background/index.ts'),
       content_script: path.join(srcDir, 'content/index.ts')

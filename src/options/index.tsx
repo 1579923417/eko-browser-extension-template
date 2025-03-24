@@ -55,6 +55,7 @@ const OptionsPage = () => {
   const modelOptions = {
     claude: [
       { value: "claude-3-5-sonnet-20241022", label: "Claude 3.5 Sonnet (default)" },
+      { value: "claude-3-7-sonnet-20250219", label: "Claude 3.7 Sonnet" },
       { value: "claude-3-opus-20240229", label: "Claude 3 Opus" },
     ],
     openai: [

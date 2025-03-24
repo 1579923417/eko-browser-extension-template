@@ -86,16 +86,16 @@ const AppRun = () => {
   return (
     <div
       style={{
-        minWidth: "360px",
         minHeight: "80px",
       }}
     >
+      <div>Prompt:</div>
       <div
         style={{
           textAlign: "center",
+          marginTop: "4px",
         }}
       >
-        <h3>Eko Workflow</h3>
         <Input.TextArea
           ref={textAreaRef}
           rows={4}
@@ -109,7 +109,7 @@ const AppRun = () => {
           onClick={handleClick}
           disabled={running}
           style={{
-            marginTop: "4px",
+            marginTop: "8px",
           }}
         >
           {running ? "Running..." : "Run"}
@@ -140,8 +140,6 @@ const AppRun = () => {
             border: "1px solid #d9d9d9",
             borderRadius: "4px",
             padding: "8px",
-            width: "360px",
-            height: "220px",
             overflowY: "auto",
             backgroundColor: "#f5f5f5",
           }}
